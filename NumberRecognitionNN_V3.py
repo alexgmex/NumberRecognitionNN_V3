@@ -11,7 +11,7 @@ class Network:
         self.weights = []
         self.biases = []
 
-        # For layers, add neurons, weights and biases
+        # For layers, add neurons, weights and biases in range (-1,1)
         for i in range(1, len(layers)):
             self.neurons.append(np.zeros(layers[i]))
             self.weights.append(2*np.random.rand(layers[i],layers[i-1])-1)
