@@ -6,7 +6,7 @@ class Network:
 
     def __init__(self, layers):
         
-        # Initialise empty arrays
+        # Initialise empty arrays, adding 1 extra layer to the neurons for the input layer
         self.neurons = [np.zeros(layers[0])]
         self.weights = []
         self.biases = []
@@ -37,9 +37,15 @@ class Network:
 
     def back_propagate(self, answer):
 
+        learning_rate = 0.1
+
         key = np.zeros(10)
         key[answer] = 1
-    
+
+        output_delta = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
+
+        
+
 
 
 
@@ -53,23 +59,26 @@ def csv_to_arr(filepath):
 
 
 
-# RELU FUNCTION
+# RELU FUNCTIONS
 def ReLU(value):
-    return np.where(value > 0, value, 0)
+    return np.where(value >= 0, value, 0)
 
 def delta_ReLU(value):
-    return np.where(value > 0, 1, 0)
+    return np.where(value >= 0, 1, 0)
 
 
 
 def main():
+
     # Get training and testing data
     train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
     test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
 
-    #
+    # Establish network layer counts
     NN = Network([784, 16, 16, 10])
-    for x in range(len(train_answers)):
+
+    # Train network
+    for x in range(1): # len(train_answers)
         guess, output_layer = NN.forward_propagate(train_data[x]/255)
         print(f"Guess: {guess}. Answer: {train_answers[x]}")
         NN.back_propagate(train_answers[x])
