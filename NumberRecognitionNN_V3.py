@@ -10,12 +10,14 @@ class Network:
         self.neurons = [np.zeros(layers[0])]
         self.weights = []
         self.biases = []
+        self.errors = []
 
         # For layers, add neurons, weights and biases in range (-1,1)
         for i in range(1, len(layers)):
             self.neurons.append(np.zeros(layers[i]))
             self.weights.append(2*np.random.rand(layers[i],layers[i-1])-1)
             self.biases.append(2*np.random.rand(layers[i])-1)
+            self.errors.append(np.zeros(layers[i]))
     
 
 
@@ -45,19 +47,24 @@ class Network:
         key[answer] = 1
 
         # Create output error
-        output_error = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
+        self.errors[-1] = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
 
         # Reshape output error to be (10,1) and last hidden layer to be (1,16)
-        transposed_error = output_error.reshape((output_error.shape[0], 1))
-        transposed_final_layer = self.neurons[-2].reshape(1,self.neurons[-2].shape[0])
+        transposed_error = self.errors[-1].reshape((self.errors[-1].shape[0], 1))
+        transposed_hidden = self.neurons[-2].reshape((1,self.neurons[-2].shape[0]))
 
         # Perform matrix multiplication and update weights
-        weight_delta = learning_rate * np.matmul(transposed_error, transposed_final_layer)
+        weight_delta = learning_rate * np.matmul(transposed_error, transposed_hidden)
         self.weights[-1] = self.weights[-1] + weight_delta
 
         # Update biases
-        bias_delta = learning_rate * output_error
+        bias_delta = learning_rate * self.errors[-1]
         self.biases[-1] = self.biases[-1] + bias_delta
+
+        # Loop through hidden layers
+        for i in range(-2, -len(self.neurons), -1):
+           # so close
+            pass
 
 
 
