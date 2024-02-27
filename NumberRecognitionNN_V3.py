@@ -37,14 +37,27 @@ class Network:
 
     def back_propagate(self, answer):
 
-        learning_rate = 0.1
+        # Assign learning rate
+        learning_rate = 0.05
 
+        # One-hot encoding of answer key
         key = np.zeros(10)
         key[answer] = 1
 
-        output_delta = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
+        # Create output error
+        output_error = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
 
-        
+        # Reshape output error to be (10,1) and last hidden layer to be (1,16)
+        transposed_error = output_error.reshape((output_error.shape[0], 1))
+        transposed_final_layer = self.neurons[-2].reshape(1,self.neurons[-2].shape[0])
+
+        # Perform matrix multiplication and update weights
+        weight_delta = learning_rate * np.matmul(transposed_error, transposed_final_layer)
+        self.weights[-1] = self.weights[-1] + weight_delta
+
+        # Update biases
+        bias_delta = learning_rate * output_error
+        self.biases[-1] = self.biases[-1] + bias_delta
 
 
 
@@ -78,7 +91,7 @@ def main():
     NN = Network([784, 16, 16, 10])
 
     # Train network
-    for x in range(1): # len(train_answers)
+    for x in range(2): #len(train_answers)
         guess, output_layer = NN.forward_propagate(train_data[x]/255)
         print(f"Guess: {guess}. Answer: {train_answers[x]}")
         NN.back_propagate(train_answers[x])
