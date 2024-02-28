@@ -10,14 +10,21 @@ class Network:
         self.neurons = [np.zeros(layers[0])]
         self.weights = []
         self.biases = []
-        self.errors = []
+        self.n_error = []
+        self.w_error = []
+        self.b_error = []
+        
+        
 
         # For layers, add neurons, weights and biases in range (-1,1)
         for i in range(1, len(layers)):
             self.neurons.append(np.zeros(layers[i]))
             self.weights.append(2*np.random.rand(layers[i],layers[i-1])-1)
             self.biases.append(2*np.random.rand(layers[i])-1)
-            self.errors.append(np.zeros(layers[i]))
+            self.n_error.append(np.zeros(layers[i]))
+            self.w_error.append(np.zeros((layers[i],layers[i-1])))
+            self.b_error.append(np.zeros(layers[i]))
+            
     
 
 
@@ -40,33 +47,44 @@ class Network:
     def back_propagate(self, answer):
 
         # Assign learning rate
-        learning_rate = 0.05
+        learning_rate = 0.001
 
         # One-hot encoding of answer key
         key = np.zeros(10)
         key[answer] = 1
 
-        # Create output error
-        self.errors[-1] = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
+        # Calculate output error
+        self.n_error[-1] = (key - self.neurons[-1]) * delta_ReLU(self.neurons[-1])
 
-        # Reshape output error to be (10,1) and last hidden layer to be (1,16)
-        transposed_error = self.errors[-1].reshape((self.errors[-1].shape[0], 1))
-        transposed_hidden = self.neurons[-2].reshape((1,self.neurons[-2].shape[0]))
+        # Loop through hidden layers and calculate errors
+        for i in range(-1, -len(self.weights), -1):
 
-        # Perform matrix multiplication and update weights
-        weight_delta = learning_rate * np.matmul(transposed_error, transposed_hidden)
-        self.weights[-1] = self.weights[-1] + weight_delta
+            # Reshape then tile previous layer sum
+            error_sum = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
+            error_sum = np.tile(error_sum, self.weights[i].shape[1])
+            
+            # Multiply and sum them with the weights
+            error_sum = error_sum * self.weights[i]
+            error_sum = np.sum(error_sum, 0, keepdims=True)
 
-        # Update biases
-        bias_delta = learning_rate * self.errors[-1]
-        self.biases[-1] = self.biases[-1] + bias_delta
+            # Flatten then multiply with derivative of neuron values
+            error_sum = error_sum.flatten()
+            self.n_error[i-1] = delta_ReLU(self.neurons[i-1]) * error_sum
 
-        # Loop through hidden layers
-        for i in range(-2, -len(self.neurons), -1):
-           # so close
-            pass
+        
+        # Update weights and biases
+        for i in range(1, len(self.weights)):
+            # Reshape output error to be (10,1) and last hidden layer to be (1,16)
+            transposed_error = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
+            transposed_hidden = self.neurons[i].reshape((1,self.neurons[i].shape[0]))
 
+            # Perform matrix multiplication
+            self.w_error[i] = learning_rate * np.matmul(transposed_error, transposed_hidden)
+            self.b_error[i] = learning_rate * self.n_error[i]
 
+            # Update weights and biases
+            self.weights[i] = self.weights[i] + self.w_error[i]
+            self.biases[i] = self.biases[i] + self.b_error[i]
 
 
 # CONVERT CSV DATA INTO AN ARRAY
@@ -81,28 +99,37 @@ def csv_to_arr(filepath):
 
 # RELU FUNCTIONS
 def ReLU(value):
-    return np.where(value >= 0, value, 0)
+    return np.where(value >= 0, value, 0.1*value)
 
 def delta_ReLU(value):
-    return np.where(value >= 0, 1, 0)
+    return np.where(value >= 0, 1, 0.1)
 
 
 
 def main():
 
-    # Get training and testing data
+    # Make accuracy counter, get training and testing data
+    accuracy_counter = 0
     train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
     test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
 
     # Establish network layer counts
-    NN = Network([784, 16, 16, 10])
+    NN = Network([784, 8, 8, 10])
 
     # Train network
-    for x in range(2): #len(train_answers)
+    for x in range(len(train_answers)): 
         guess, output_layer = NN.forward_propagate(train_data[x]/255)
-        print(f"Guess: {guess}. Answer: {train_answers[x]}")
         NN.back_propagate(train_answers[x])
-
+        print(f"Training... {round(100*x/len(train_answers))}%")
+        # print(f"Guess: {guess}. Answer: {train_answers[x]}")
+    
+    # Test network
+    for x in range(len(test_answers)): 
+        guess, output_layer = NN.forward_propagate(test_data[x]/255)
+        print(f"Guess: {guess}. Answer: {test_answers[x]}")
+        if guess == test_answers[x]: accuracy_counter += 1
+    
+    print(f"\nFinal accuracy: {round(100*accuracy_counter/len(test_answers))}%")
 
 if __name__ == "__main__":
     main()
