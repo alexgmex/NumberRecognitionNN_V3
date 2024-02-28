@@ -16,11 +16,11 @@ class Network:
         
         
 
-        # For layers, add neurons, weights and biases in range (-1,1)
+        # For layers, add neurons, weights and biases in range (0,1)
         for i in range(1, len(layers)):
             self.neurons.append(np.zeros(layers[i]))
             self.weights.append(2*np.random.rand(layers[i],layers[i-1])-1)
-            self.biases.append(2*np.random.rand(layers[i])-1)
+            self.biases.append(np.random.rand(layers[i]))
             self.n_error.append(np.zeros(layers[i]))
             self.w_error.append(np.zeros((layers[i],layers[i-1])))
             self.b_error.append(np.zeros(layers[i]))
@@ -47,7 +47,7 @@ class Network:
     def back_propagate(self, answer):
 
         # Assign learning rate
-        learning_rate = 0.001
+        learning_rate = 0.005
 
         # One-hot encoding of answer key
         key = np.zeros(10)
@@ -112,9 +112,10 @@ def main():
     accuracy_counter = 0
     train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
     test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
+    bias_answers, bias_data = csv_to_arr("MNIST_Data/mnist_bias.csv")
 
     # Establish network layer counts
-    NN = Network([784, 8, 8, 10])
+    NN = Network([784, 16, 16, 10])
 
     # Train network
     for x in range(len(train_answers)): 
@@ -122,6 +123,12 @@ def main():
         NN.back_propagate(train_answers[x])
         print(f"Training... {round(100*x/len(train_answers))}%")
         # print(f"Guess: {guess}. Answer: {train_answers[x]}")
+
+    # for x in range(len(bias_answers)): 
+    #     guess, output_layer = NN.forward_propagate(bias_data[x]/255)
+    #     NN.back_propagate(bias_answers[x])
+    #     # print(f"Training... {round(100*x/len(train_answers))}%")
+    #     print(f"Guess: {guess}. Answer: {train_answers[x]}")
     
     # Test network
     for x in range(len(test_answers)): 
