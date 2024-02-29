@@ -34,9 +34,13 @@ class Network:
         # Set first layer of neurons to be the input
         self.neurons[0] = input_layer
 
-        # Forward propagate
-        for i in range(len(self.neurons)-1):
+        # Forward propagate until last layer
+        for i in range(len(self.weights)-1):
             self.neurons[i+1] = ReLU(np.dot(self.weights[i], self.neurons[i]) + self.biases[i])
+
+        # Softmax last layer
+        i_final = len(self.weights) - 1
+        self.neurons[i_final + 1] = softmax(np.dot(self.weights[i_final], self.neurons[i_final]) + self.biases[i_final])
 
         # Return guess and output layer
         return np.argmax(self.neurons[-1]), self.neurons[-1]
@@ -47,7 +51,7 @@ class Network:
     def back_propagate(self, answer):
 
         # Assign learning rate
-        learning_rate = 0.005
+        learning_rate = 0.001
 
         # One-hot encoding of answer key
         key = np.zeros(10)
@@ -97,12 +101,18 @@ def csv_to_arr(filepath):
 
 
 
-# RELU FUNCTIONS
+# TRANSFER FUNCTIONS
 def ReLU(value):
     return np.where(value >= 0, value, 0.1*value)
 
 def delta_ReLU(value):
     return np.where(value >= 0, 1, 0.1)
+
+def softmax(value):
+    return np.exp(value)/np.sum(np.exp(value))
+
+def delta_softmax(value):
+    return np.log(value)
 
 
 
@@ -117,18 +127,18 @@ def main():
     # Establish network layer counts
     NN = Network([784, 16, 16, 10])
 
-    # Train network
-    for x in range(len(train_answers)): 
-        guess, output_layer = NN.forward_propagate(train_data[x]/255)
-        NN.back_propagate(train_answers[x])
-        print(f"Training... {round(100*x/len(train_answers))}%")
-        # print(f"Guess: {guess}. Answer: {train_answers[x]}")
+    # # Train network
+    # for x in range(len(train_answers)): 
+    #     guess, output_layer = NN.forward_propagate(train_data[x]/255)
+    #     NN.back_propagate(train_answers[x])
+    #     print(f"Training... {round(100*x/len(train_answers))}%")
+    #     # print(f"Guess: {guess}. Answer: {train_answers[x]}")
 
-    # for x in range(len(bias_answers)): 
-    #     guess, output_layer = NN.forward_propagate(bias_data[x]/255)
-    #     NN.back_propagate(bias_answers[x])
-    #     # print(f"Training... {round(100*x/len(train_answers))}%")
-    #     print(f"Guess: {guess}. Answer: {train_answers[x]}")
+    for x in range(len(bias_answers)): 
+        guess, output_layer = NN.forward_propagate(bias_data[x]/255)
+        NN.back_propagate(bias_answers[x])
+        # print(f"Training... {round(100*x/len(train_answers))}%")
+        print(f"Guess: {guess}. Answer: {train_answers[x]}")
     
     # Test network
     for x in range(len(test_answers)): 
