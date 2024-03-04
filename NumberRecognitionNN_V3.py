@@ -147,6 +147,8 @@ def train_network(train_answers, train_data, NN, screen):
             if event.type == pygame.QUIT:
                 pygame.quit()
 
+    pygame.display.quit()
+
     return NN, train_arr
 
 
