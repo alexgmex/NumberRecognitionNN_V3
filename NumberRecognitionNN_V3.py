@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import pygame
 import matplotlib.pyplot as plt
 
 # Neural network class
@@ -14,10 +15,8 @@ class Network:
         self.n_error = []
         self.w_error = []
         self.b_error = []
-        
-        
 
-        # For layers, add neurons, weights and biases in range (0,1)
+        # For layers, add neurons, weights and biases in range (-1,1)
         for i in range(1, len(layers)):
             self.neurons.append(np.zeros(layers[i]))
             self.weights.append(2*np.random.rand(layers[i],layers[i-1])-1)
@@ -25,9 +24,6 @@ class Network:
             self.n_error.append(np.zeros(layers[i]))
             self.w_error.append(np.zeros((layers[i],layers[i-1])))
             self.b_error.append(np.zeros(layers[i]))
-            
-    
-
 
 
     def forward_propagate(self, input_layer):
@@ -46,8 +42,6 @@ class Network:
         # Return guess and output layer
         return np.argmax(self.neurons[-1]), self.neurons[-1]
     
-
-
 
     def back_propagate(self, answer):
 
@@ -94,6 +88,7 @@ class Network:
 
 
 
+
 # CONVERT CSV DATA INTO AN ARRAY
 def csv_to_arr(filepath):
     arr = pd.read_csv(filepath,header=None).to_numpy()
@@ -110,10 +105,12 @@ def activation(value):
     # return (np.exp(value) - np.exp(-value)) / (np.exp(value) + np.exp(-value)) # Tanh
     # return 1.0 / (1.0 + np.exp(-value)) # Sigmoid
 
+
 def delta_activation(value): 
     return np.where(value >= 0, 1, 0.1) # Leaky ReLU
     # return 1.0 - np.power(activation(value),2) # Tanh
     # return activation(value)*(1.0 - activation(value)) # Sigmoid
+
 
 def softmax(value):
     return np.exp(value)/np.sum(np.exp(value))
@@ -121,42 +118,42 @@ def softmax(value):
 
 
 
-def main():
+# ADMINISTRATIVE FUNCTIONS
+def train_network(train_answers, train_data, NN):
 
-    # Get training and testing data
-    train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
-    test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
-    bias_answers, bias_data = csv_to_arr("MNIST_Data/mnist_bias.csv")
-
-
-    # Make accuracy counters
+    # Establish training array for rolling accuracy counter later
     train_arr = np.zeros(len(train_answers))
-    test_counter = 0
 
-
-    # Establish network layer counts
-    NN = Network([784, 100, 100, 10])
-
-
-    # Train network
+    # Go through all training examples, forward propagate then back propagate
     for x in range(len(train_answers)): 
         guess, output_layer = NN.forward_propagate(train_data[x]/255)
         NN.back_propagate(train_answers[x])
         print(f"Training... {round(100*x/len(train_answers))}%")
         if guess == train_answers[x]: train_arr[x] = 1
-        
     
-    # Test network
+    return NN, train_arr
+
+
+def test_network(test_answers, test_data, NN):
+
+    # Establish testing counter for final accuracy evaluation
+    test_counter = 0
+
+    # Go through all testing examples and evaluate accuracy
     for x in range(len(test_answers)): 
         guess, output_layer = NN.forward_propagate(test_data[x]/255)
         print(f"Guess: {guess}. Answer: {test_answers[x]}")
         if guess == test_answers[x]: test_counter += 1
     
+    return NN, test_counter
 
-    # Print final accuracy and create rolling average of results
 
+def evaluate_training(test_counter, train_arr, test_answers, train_answers):
+
+    # Print final accuracy
     print(f"\nFinal accuracy: {round(100*test_counter/len(test_answers),2)}%")
 
+    # Create rolling average
     rolling_avg = []
     x_axis = []
 
@@ -170,6 +167,27 @@ def main():
     plt.ylabel("Accuracy (%)")
     plt.show()
 
+
+
+
+def main():
+
+    # Get training and testing data
+    train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
+    test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
+    bias_answers, bias_data = csv_to_arr("MNIST_Data/mnist_bias.csv")
+
+    # Establish network layer counts
+    NN = Network([784, 100, 100, 10])
+
+    # Train network
+    NN, train_arr = train_network(train_answers, train_data, NN)
+        
+    # Test network
+    NN, test_counter = test_network(test_answers, test_data, NN)
+
+    # Print final accuracy and create rolling average of results
+    evaluate_training(test_counter, train_arr, test_answers, train_answers)
 
 if __name__ == "__main__":
     main()
