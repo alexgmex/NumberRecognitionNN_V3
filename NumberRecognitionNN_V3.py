@@ -64,27 +64,28 @@ class Network:
         # Loop through hidden layers and calculate errors
         for i in range(-1, -len(self.weights), -1):
 
-            # Reshape then tile previous layer sum
-            error_sum = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
-            error_sum = np.tile(error_sum, self.weights[i].shape[1])
+            # Reshape then tile the error of the current layer to match the shape of the weights matrix
+            error_tile = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
+            error_tile = np.tile(error_tile, self.weights[i].shape[1])
             
-            # Multiply and sum them with the weights
-            error_sum = error_sum * self.weights[i]
-            error_sum = np.sum(error_sum, 0, keepdims=True)
+            # Multiply them with the weights to find the error per weight, then sum it across each neuron
+            error_tile = error_tile * self.weights[i]
+            error_tile = np.sum(error_tile, 0, keepdims=True)
 
-            # Flatten then multiply with derivative of neuron values
-            error_sum = error_sum.flatten()
-            self.n_error[i-1] = delta_activation(self.neurons[i-1]) * error_sum
+            # Flatten to convert the neuron sums back to a column vector and find the error in each neuron
+            error_tile = error_tile.flatten()
+            self.n_error[i-1] = delta_activation(self.neurons[i-1]) * error_tile
 
         
         # Update weights and biases
         for i in range(len(self.weights)):
-            # Reshape output error to be (10,1) and last hidden layer to be (1,16)
-            transposed_error = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
-            transposed_hidden = self.neurons[i].reshape((1,self.neurons[i].shape[0]))
 
-            # Perform matrix multiplication
-            self.w_error[i] = learning_rate * np.matmul(transposed_error, transposed_hidden)
+            # Reshape the error of the layer to be a row vector and the neurons to be a column vector for multiplication
+            transposed_error = self.n_error[i].reshape((self.n_error[i].shape[0], 1))
+            transposed_neurons = self.neurons[i].reshape((1,self.neurons[i].shape[0]))
+
+            # Perform matrix multiplication to estimate the error for each weight
+            self.w_error[i] = learning_rate * np.matmul(transposed_error, transposed_neurons)
             self.b_error[i] = learning_rate * self.n_error[i]
 
             # Update weights and biases
