@@ -139,7 +139,7 @@ def train_network(train_answers, train_data, NN, screen):
         for y in range(len(train_data[x])):
             pygame.draw.rect(screen, (train_data[x][y], train_data[x][y], train_data[x][y]), ((y%28)*10, int(y/28)*10, 10, 10))
         screen.blit(pygame.image.load("outputs/" + str(train_answers[x]) + ".png"), (28*10, 0))
-        pygame.draw.rect(screen, (0, 255, 0), (0, 28*10 + 10, progress*28*10, 10))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 28*10 + 10, progress*28*10*2, 10))
         pygame.display.update()
 
         # Detect GUI close
