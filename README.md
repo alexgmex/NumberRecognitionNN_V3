@@ -8,5 +8,7 @@ Through my own research and code I've learned heaps about AI and machine learnin
 
 To run, simply run NumberRecognitionNN_V3.py
 
+To speed up the code, consider altering the layer densities (line 209) or commenting out the GUI functionality (line 138-148).
+
 Requirements:
 *pip install pandas numpy pygame matplotlib*
