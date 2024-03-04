@@ -197,6 +197,7 @@ def main():
 
     # Establish GUI
     pygame.init()
+    pygame.display.set_caption("GUI-Based Neural Network by Alex G")
     screen = pygame.display.set_mode([28*10*2, 28*10 + 3*10])
 
     # Get training and testing data
