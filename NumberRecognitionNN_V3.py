@@ -26,6 +26,7 @@ class Network:
             self.b_error.append(np.zeros(layers[i]))
 
 
+
     def forward_propagate(self, input_layer):
 
         # Set first layer of neurons to be the input
@@ -39,9 +40,10 @@ class Network:
         i_final = len(self.weights) - 1
         self.neurons[i_final + 1] = softmax(np.dot(self.weights[i_final], self.neurons[i_final]) + self.biases[i_final])
 
-        # Return guess and output layer
-        return np.argmax(self.neurons[-1]), self.neurons[-1]
+        # Return guess and confidence
+        return np.argmax(self.neurons[-1]), 100*np.max(self.neurons[-1])
     
+
 
     def back_propagate(self, answer):
 
@@ -118,36 +120,57 @@ def softmax(value):
 
 
 
-# ADMINISTRATIVE FUNCTIONS
-def train_network(train_answers, train_data, NN):
+# TRAIN NETWORK
+def train_network(train_answers, train_data, NN, screen):
 
     # Establish training array for rolling accuracy counter later
     train_arr = np.zeros(len(train_answers))
 
-    # Go through all training examples, forward propagate then back propagate
-    for x in range(len(train_answers)): 
-        guess, output_layer = NN.forward_propagate(train_data[x]/255)
+    for x in range(len(train_answers)):
+
+        # Forward propagate, back propagate, and print and store results.
+        guess, confidence = NN.forward_propagate(train_data[x]/255)
         NN.back_propagate(train_answers[x])
-        print(f"Training... {round(100*x/len(train_answers))}%")
+        progress = x/len(train_answers)
+        print(f"Guess: {guess}. Answer: {train_answers[x]}. Confidence: {round(confidence,1)}%. Epoch: {round(100*progress,1)}%.")
         if guess == train_answers[x]: train_arr[x] = 1
-    
+
+        # Make GUI output
+        for y in range(len(train_data[x])):
+            pygame.draw.rect(screen, (train_data[x][y], train_data[x][y], train_data[x][y]), ((y%28)*10, int(y/28)*10, 10, 10))
+        screen.blit(pygame.image.load("outputs/" + str(train_answers[x]) + ".png"), (28*10, 0))
+        pygame.draw.rect(screen, (0, 255, 0), (0, 28*10 + 10, progress*28*10, 10))
+        pygame.display.update()
+
+        # Detect GUI close
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+
     return NN, train_arr
 
 
+
+
+# TEST NETWORK
 def test_network(test_answers, test_data, NN):
 
     # Establish testing counter for final accuracy evaluation
     test_counter = 0
 
-    # Go through all testing examples and evaluate accuracy
     for x in range(len(test_answers)): 
-        guess, output_layer = NN.forward_propagate(test_data[x]/255)
-        print(f"Guess: {guess}. Answer: {test_answers[x]}")
+
+        # Forward propagate, print and store results.
+        guess, confidence = NN.forward_propagate(test_data[x]/255)
+        print(f"Guess: {guess}. Answer: {test_answers[x]}. Confidence: {round(confidence,1)}%")
         if guess == test_answers[x]: test_counter += 1
     
     return NN, test_counter
 
 
+
+
+# EVALUATE TRAINING
 def evaluate_training(test_counter, train_arr, test_answers, train_answers):
 
     # Print final accuracy
@@ -172,6 +195,10 @@ def evaluate_training(test_counter, train_arr, test_answers, train_answers):
 
 def main():
 
+    # Establish GUI
+    pygame.init()
+    screen = pygame.display.set_mode([28*10*2, 28*10 + 3*10])
+
     # Get training and testing data
     train_answers, train_data = csv_to_arr("MNIST_Data/mnist_train.csv")
     test_answers, test_data = csv_to_arr("MNIST_Data/mnist_test.csv")
@@ -181,7 +208,7 @@ def main():
     NN = Network([784, 100, 100, 10])
 
     # Train network
-    NN, train_arr = train_network(train_answers, train_data, NN)
+    NN, train_arr = train_network(train_answers, train_data, NN, screen)
         
     # Test network
     NN, test_counter = test_network(test_answers, test_data, NN)
