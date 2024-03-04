@@ -2,10 +2,7 @@
 
 GUI-Enabled Neural Network from scratch for the MNIST database using Numpy, Pandas, Pygame and Matplotlib, which trains and then tests itself on recognising handwritten numbers.
 
-<video width="320" height="240" controls>
-  <source src="multimedia/sample.mp4" type="video/mp4">
-</video>
-![sampleoutput](https://github.com/alexgmex/NumberRecognitionNN_V3/assets/136417553/3b629bcc-deed-4de2-8b22-60e6b68c7fb9)
+<img src="multimedia/samplegif.gif" width="49%" height="49%"/> <img src="multimedia/sampleoutput.png" width="49%" height="49%"/>
 
 After much refactoring, debugging, and research, his is the 3rd iteration I've made of this neural-network style project, with my highest accuracy yet of 91-92%!
 
